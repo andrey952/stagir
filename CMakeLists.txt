@@ -10,13 +10,27 @@ option(BUILD_SHARED_LIBS "Enable building a shared library version" OFF)
 
 # Позволяет включать subdirectories в проект
 add_subdirectory(logger_library)
-add_subdirectory(test_app)
 add_subdirectory(stats_collector)
 
 # Устанавливаем переменную пути для удобства установки
 set(INSTALL_PATH "${CMAKE_BINARY_DIR}/install")
 
-# Конкретизируем цели установки
-install(DIRECTORY logger_library/include DESTINATION include)
-install(DIRECTORY test_app DESTINATION bin)
-install(DIRECTORY stats_collector DESTINATION bin)
+# Основное приложение (строится отдельно от тестов)
+add_executable(my_app stats_collector/stats_collector.cpp)
+target_link_libraries(my_app logger)
+install(TARGETS my_app DESTINATION bin)
+
+# --- ИНТЕГРАЦИЯ GOOGLE TEST ---
+
+# Добавляем Google Test в проект
+add_subdirectory(external/googletest)
+
+# Включаем тестирование
+enable_testing()
+
+# Цель для тестов аргументов
+add_executable(arg_tests tests/test_args.cpp)
+target_link_libraries(arg_tests gtest_main logger)
+
+# Регистрация теста
+add_test(NAME arg_tests COMMAND arg_tests)
